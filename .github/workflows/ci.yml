@@ -1,0 +1,60 @@
+name: CI - Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    env:
+      PORT: ${{ secrets.BACKEND_PORT }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_REDIS_HOST: ${{ secrets.DB_REDIS_HOST }}
+      DB_REDIS_PORT: ${{ secrets.DB_REDIS_PORT }}
+      ACCESS_TOKEN_SECRET: ${{ secrets.ACCESS_TOKEN_SECRET }}
+      REFRESH_TOKEN_SECRET: ${{ secrets.REFRESH_TOKEN_SECRET }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm install
+          cd ../frontend
+          npm install
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          npm run test
+
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm run test
+
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            backend/build
+            frontend/build
